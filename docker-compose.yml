@@ -1,0 +1,48 @@
+version: "3.7"
+services:
+  app:
+      build:
+        args:
+          user: sammy
+          uid: 1000
+        context: ./
+        dockerfile: Dockerfile
+      container_name: report-api
+      restart: unless-stopped
+      working_dir: /var/www/
+      volumes:
+        - ./:/var/www
+      networks:
+        - api
+
+  nginx:
+    image: nginx:1.17-alpine
+    container_name: report-api-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx/:/etc/nginx/conf.d/
+    networks:
+      - api
+
+  db:
+    image: mysql:8.0.26
+    container_name: api-db
+    volumes: 
+      - ./mysql/mysql_db:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: report_db
+      MYSQL_USER: devuser
+      MYSQL_PASSWORD: devpass
+    ports:
+      - "3010:3306"
+    networks: 
+      - api
+
+networks:
+  api:
+    driver: bridge
